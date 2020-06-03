@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -26,13 +27,14 @@ def train(data_loader, model, optimizer, args, writer):
 
         loss = loss_recons + loss_vq + args.beta * loss_commit
         loss.backward()
+        optimizer.step()
 
         # Logs
+        t0 = time.time()
         writer.add_scalar("loss/train/reconstruction", loss_recons.item(), args.steps)
         writer.add_scalar("loss/train/quantization", loss_vq.item(), args.steps)
         if args.steps % 100 == 0:
             print(args.steps, loss.item())
-        optimizer.step()
         args.steps += 1
 
 

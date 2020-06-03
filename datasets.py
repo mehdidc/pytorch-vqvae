@@ -3,6 +3,8 @@ import csv
 import torch.utils.data as data
 from PIL import Image
 
+from torchvision.datasets import ImageFolder
+
 def pil_loader(path):
     # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
     # Borrowed from https://github.com/pytorch/vision/blob/master/torchvision/datasets/folder.py
@@ -12,7 +14,7 @@ def pil_loader(path):
 
 class MiniImagenet(data.Dataset):
 
-    base_folder = '/data/lisa/data/miniimagenet'
+    base_folder = '../data'
     filename = 'miniimagenet.zip'
     splits = {
         'train': 'train.csv',

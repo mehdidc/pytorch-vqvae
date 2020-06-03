@@ -5,7 +5,7 @@ from torchvision import transforms, datasets
 from torchvision.utils import save_image, make_grid
 
 from modules import VectorQuantizedVAE, to_scalar
-from datasets import MiniImagenet
+from datasets import MiniImagenet, ImageFolder
 
 from tensorboardX import SummaryWriter
 
@@ -102,8 +102,18 @@ def main(args):
         test_dataset = MiniImagenet(args.data_folder, test=True,
             download=True, transform=transform)
         num_channels = 3
+    else:
+        transform = transforms.Compose([
+            transforms.RandomResizedCrop(128),
+            transforms.ToTensor(),
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        ])
+        # Define the train, valid & test datasets
+        train_dataset = ImageFolder(os.path.join(args.data_folder, "train"), transform=transform)
+        valid_dataset = ImageFolder(os.path.join(args.data_folder, "val"), transform=transform)
+        test_dataset = valid_dataset
+        num_channels = 3
 
-    # Define the data loaders
     train_loader = torch.utils.data.DataLoader(train_dataset,
         batch_size=args.batch_size, shuffle=False,
         num_workers=args.num_workers, pin_memory=True)
@@ -130,7 +140,7 @@ def main(args):
     for epoch in range(args.num_epochs):
         train(train_loader, model, optimizer, args, writer)
         loss, _ = test(valid_loader, model, args, writer)
-
+        print(epoch, "test loss: ", loss.item())
         reconstruction = generate_samples(fixed_images, model, args)
         grid = make_grid(reconstruction.cpu(), nrow=8, range=(-1, 1), normalize=True)
         writer.add_image('reconstruction', grid, epoch + 1)

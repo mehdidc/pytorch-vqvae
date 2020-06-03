@@ -29,7 +29,8 @@ def train(data_loader, model, optimizer, args, writer):
         # Logs
         writer.add_scalar('loss/train/reconstruction', loss_recons.item(), args.steps)
         writer.add_scalar('loss/train/quantization', loss_vq.item(), args.steps)
-
+        if args.steps % 100 == 0:
+            print(args.steps, loss.item())
         optimizer.step()
         args.steps += 1
 
@@ -104,7 +105,7 @@ def main(args):
         num_channels = 3
     else:
         transform = transforms.Compose([
-            transforms.RandomResizedCrop(128),
+            transforms.RandomResizedCrop(args.image_size),
             transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
@@ -136,11 +137,11 @@ def main(args):
     grid = make_grid(reconstruction.cpu(), nrow=8, range=(-1, 1), normalize=True)
     writer.add_image('reconstruction', grid, 0)
 
-    best_loss = -1.
+    best_loss = -1
     for epoch in range(args.num_epochs):
         train(train_loader, model, optimizer, args, writer)
         loss, _ = test(valid_loader, model, args, writer)
-        print(epoch, "test loss: ", loss.item())
+        print(epoch, "test loss: ", loss)
         reconstruction = generate_samples(fixed_images, model, args)
         grid = make_grid(reconstruction.cpu(), nrow=8, range=(-1, 1), normalize=True)
         writer.add_image('reconstruction', grid, epoch + 1)
@@ -173,6 +174,8 @@ if __name__ == '__main__':
 
     # Optimization
     parser.add_argument('--batch-size', type=int, default=128,
+        help='batch size (default: 128)')
+    parser.add_argument('--image-size', type=int, default=128,
         help='batch size (default: 128)')
     parser.add_argument('--num-epochs', type=int, default=100,
         help='number of epochs (default: 100)')
